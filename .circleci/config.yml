@@ -1,0 +1,85 @@
+version: 2
+jobs:
+  setup:
+    working_directory: /go/src/github.com/segmentio/robo
+    resource_class: small
+    docker:
+      - image: segment/circleci-golang:1.10
+    steps:
+      - checkout
+      - restore_cache:
+          key: vendor-{{ checksum "Gopkg.lock" }}
+      - run: make install-deps
+      - save_cache:
+          key: vendor-{{ checksum "Gopkg.lock" }}
+          paths:
+            - vendor
+      - persist_to_workspace:
+          root: .
+          paths: [.]
+
+  test:
+    working_directory: /go/src/github.com/segmentio/robo
+    resource_class: small
+    docker:
+      - image: segment/circleci-golang:1.10
+    steps:
+      - attach_workspace: { at: . }
+      - run: make test
+
+  vet:
+    working_directory: /go/src/github.com/segmentio/robo
+    resource_class: small
+    docker:
+      - image: segment/circleci-golang:1.10
+    steps:
+      - attach_workspace: { at: . }
+      - run: make lint
+
+  build:
+    working_directory: /go/src/github.com/segmentio/robo
+    docker:
+      - image: segment/circleci-golang:1.10
+    steps:
+      - attach_workspace: { at: . }
+      - run:
+          name: Build
+          command: |
+            make build
+      - persist_to_workspace:
+          root: .
+          paths: [./dist/]
+
+
+  publish:
+    working_directory: /go/src/github.com/segmentio/robo
+    docker:
+      - image: segment/circleci-golang:1.10
+    steps:
+      - attach_workspace: { at: . }
+      - setup_remote_docker: { reusable: true }
+      - run:
+          name: Release
+          command: |
+            make release
+
+workflows:
+  version: 2
+  run:
+    jobs:
+      - setup:
+          filters:
+            tags: { only: /.*/ }
+      - test:
+          requires: [setup]
+      - vet:
+          requires: [setup]
+      - build:
+          requires: [setup]
+          filters:
+            tags: { only: /.*/ }
+      - publish:
+          requires: [build]
+          filters:
+            tags: { only: /.*/ }
+            branches: { ignore: /.*/ }
