@@ -9,7 +9,8 @@ import (
 	analytics "gopkg.in/segmentio/analytics-go.v3"
 )
 
-var version = "0.4.2"
+// Set by linker flags
+var version = "dev"
 
 const analyticsWriteKey = "JX2IUwzrdfKoGilkImNmjRdjNFPmSMfe"
 
