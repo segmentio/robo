@@ -25,6 +25,13 @@ type Task struct {
 	Exec       string
 	Usage      string
 	Examples   []*Example
+	Trace      bool
+}
+
+// Run the task with xtrace shell option
+func (t *Task) RunTrace(args []string) error {
+	t.Trace = true
+	return t.Run(args)
 }
 
 // Run the task with `args`.
@@ -48,6 +55,9 @@ func (t *Task) Run(args []string) error {
 func (t *Task) RunScript(args []string) error {
 	path := filepath.Join(t.LookupPath, t.Script)
 	args = append([]string{path}, args...)
+	if t.Trace {
+		args = append([]string{"-x"}, args...)
+	}
 	cmd := exec.Command("sh", args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -58,6 +68,9 @@ func (t *Task) RunScript(args []string) error {
 // RunCommand runs the `command` via the shell.
 func (t *Task) RunCommand(args []string) error {
 	args = append([]string{"-c", t.Command, "sh"}, args...)
+	if t.Trace {
+		args = append([]string{"-x"}, args...)
+	}
 	cmd := exec.Command("sh", args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout

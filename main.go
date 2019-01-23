@@ -22,7 +22,7 @@ var (
 const usage = `
   Usage:
     robo [--config file]
-    robo <task> [<arg>...] [--config file]
+    robo [--xtrace] <task> [<arg>...] [--config file]
     robo help [<task>] [--config file]
     robo variables [--config file]
     robo -h | --help
@@ -30,6 +30,7 @@ const usage = `
 
   Options:
     -c, --config file   config file to load
+    -x, --xtrace        set xtrace when running scripts or commands
     -h, --help          output help information
     -v, --version       output version
 
@@ -96,7 +97,12 @@ func main() {
 					Set("args", arguments),
 			})
 
-			cli.Run(conf, name, arguments)
+			xtrace, ok := args["--xtrace"].(bool)
+			if xtrace && ok {
+				cli.RunTrace(conf, name, arguments)
+			} else {
+				cli.Run(conf, name, arguments)
+			}
 		} else {
 			cli.List(conf)
 		}
