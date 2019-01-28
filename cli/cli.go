@@ -105,6 +105,21 @@ func Run(c *config.Config, name string, args []string) {
 	}
 }
 
+// Run the task with xtrace
+func RunTrace(c *config.Config, name string, args []string) {
+	task, ok := c.Tasks[name]
+	if !ok {
+		Fatalf("undefined task %q", name)
+	}
+
+	task.LookupPath = filepath.Dir(c.File)
+
+	err := task.RunTrace(args)
+	if err != nil {
+		Fatalf("error: %s", err)
+	}
+}
+
 // Fatalf writes to stderr and exits.
 func Fatalf(msg string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, "\n  %s\n\n", fmt.Sprintf(msg, args...))
