@@ -1,45 +1,60 @@
 version: 2
 jobs:
   setup:
-    working_directory: /go/src/github.com/segmentio/robo
     resource_class: small
     docker:
-      - image: segment/circleci-golang:1.10
+      - image: segment/circleci-golang:1.12
     steps:
       - checkout
       - restore_cache:
-          key: vendor-{{ checksum "Gopkg.lock" }}
+          key: vendor-{{ checksum "go.sum" }}
       - run: make install-deps
       - save_cache:
-          key: vendor-{{ checksum "Gopkg.lock" }}
+          key: vendor-{{ checksum "go.sum" }}
           paths:
             - vendor
       - persist_to_workspace:
           root: .
           paths: [.]
 
-  test:
-    working_directory: /go/src/github.com/segmentio/robo
+  modtidyvendor:
     resource_class: small
     docker:
-      - image: segment/circleci-golang:1.10
+      - image: segment/circleci-golang:1.12
+    steps:
+      - attach_workspace: { at: . }
+      - run:
+          name: Check modules are tidy and checked in
+          command: |
+            export GO111MODULE=on
+            go mod tidy
+            go mod vendor
+            if [ "$(git status --porcelain)" != "" ]; then
+              echo "git tree is dirty after tidying and vendoring modules"
+              echo "ensure go.mod and go.sum are tidy and vendor is checked in"
+              git status
+              exit 1
+            fi
+
+  test:
+    resource_class: small
+    docker:
+      - image: segment/circleci-golang:1.12
     steps:
       - attach_workspace: { at: . }
       - run: make test
 
   vet:
-    working_directory: /go/src/github.com/segmentio/robo
     resource_class: small
     docker:
-      - image: segment/circleci-golang:1.10
+      - image: segment/circleci-golang:1.12
     steps:
       - attach_workspace: { at: . }
       - run: make lint
 
   build:
-    working_directory: /go/src/github.com/segmentio/robo
     docker:
-      - image: segment/circleci-golang:1.10
+      - image: segment/circleci-golang:1.12
     steps:
       - attach_workspace: { at: . }
       - run:
@@ -70,6 +85,8 @@ workflows:
       - setup:
           filters:
             tags: { only: /.*/ }
+      - modtidyvendor:
+          requires: [setup]
       - test:
           requires: [setup]
       - vet:
