@@ -5,7 +5,7 @@ MODVENDOR := -mod=vendor
 test:
 	@go test ${MODVENDOR} -cover ./...
 
-lint: verify-deps
+lint:
 	go vet ${MODVENDOR} ./...
 
 clean:

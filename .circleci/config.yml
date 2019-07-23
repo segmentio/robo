@@ -6,13 +6,6 @@ jobs:
       - image: segment/circleci-golang:1.12
     steps:
       - checkout
-      - restore_cache:
-          key: vendor-{{ checksum "go.sum" }}
-      - run: make install-deps
-      - save_cache:
-          key: vendor-{{ checksum "go.sum" }}
-          paths:
-            - vendor
       - persist_to_workspace:
           root: .
           paths: [.]
