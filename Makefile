@@ -1,25 +1,20 @@
 VERSION := $(shell git describe --tags --always --dirty="-dev")
 LDFLAGS := -ldflags='-X "main.version=$(VERSION)"'
+MODVENDOR := -mod=vendor
 
 test:
-	@go test -cover ./...
-
-install-deps:
-	dep ensure -v
-
-verify-deps:
-	test `dep ensure -no-vendor -dry-run | wc -l` -eq 0
+	@go test ${MODVENDOR} -cover ./...
 
 lint: verify-deps
-	go vet ./...
+	go vet ${MODVENDOR} ./...
 
 clean:
 	rm -rf ./dist
 
 build: clean
 	mkdir dist
-	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o dist/robo-$(VERSION)-darwin-amd64
-	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o dist/robo-$(VERSION)-linux-amd64
+	GOOS=darwin GOARCH=amd64 go build ${MODVENDOR} $(LDFLAGS) -o dist/robo-$(VERSION)-darwin-amd64
+	GOOS=linux GOARCH=amd64 go build ${MODVENDOR} $(LDFLAGS) -o dist/robo-$(VERSION)-linux-amd64
 
 gh-release:
 	go get -u github.com/aktau/github-release
