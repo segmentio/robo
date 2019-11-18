@@ -2,8 +2,11 @@ VERSION := $(shell git describe --tags --always --dirty="-dev")
 LDFLAGS := -ldflags='-X "main.version=$(VERSION)"'
 MODVENDOR := -mod=vendor
 
-test:
+test: vendor
 	@go test ${MODVENDOR} -cover ./...
+
+vendor: go.mod
+	@go mod vendor
 
 lint:
 	go vet ${MODVENDOR} ./...
