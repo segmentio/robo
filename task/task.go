@@ -36,29 +36,34 @@ func (t *Task) RunTrace(args []string) error {
 
 // Run the task with `args`.
 func (t *Task) Run(args []string) error {
+	shell := os.Getenv("ROBO_SHELL")
+	if shell == "" {
+		shell = "sh"
+	}
+
 	if t.Exec != "" {
 		return t.RunExec(args)
 	}
 
 	if t.Script != "" {
-		return t.RunScript(args)
+		return t.RunScript(shell, args)
 	}
 
 	if t.Command != "" {
-		return t.RunCommand(args)
+		return t.RunCommand(shell, args)
 	}
 
 	return fmt.Errorf("nothing to run (add script, command, or exec key)")
 }
 
 // RunScript runs the target shell `script` file.
-func (t *Task) RunScript(args []string) error {
+func (t *Task) RunScript(shell string, args []string) error {
 	path := filepath.Join(t.LookupPath, t.Script)
 	args = append([]string{path}, args...)
 	if t.Trace {
 		args = append([]string{"-x"}, args...)
 	}
-	cmd := exec.Command("sh", args...)
+	cmd := exec.Command(shell, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -66,12 +71,12 @@ func (t *Task) RunScript(args []string) error {
 }
 
 // RunCommand runs the `command` via the shell.
-func (t *Task) RunCommand(args []string) error {
+func (t *Task) RunCommand(shell string, args []string) error {
 	args = append([]string{"-c", t.Command, "sh"}, args...)
 	if t.Trace {
 		args = append([]string{"-x"}, args...)
 	}
-	cmd := exec.Command("sh", args...)
+	cmd := exec.Command(shell, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

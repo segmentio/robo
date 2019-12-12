@@ -25,6 +25,11 @@
 $ go get github.com/segmentio/robo
 ```
 
+### Shell configuration
+
+Some operating system such as Ubuntu use a specific version of `sh`. You can override the
+shell use by Robo to execute the tasks by setting the `ROBO_SHELL` environment variable.
+
 ## Usage
 
  Command-line usage.
