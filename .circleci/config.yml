@@ -9,7 +9,7 @@ jobs:
           root: .
           paths: [.]
 
-  modtidyvendor:
+  modtidy:
     docker:
       - image: golang:1.13
     steps:
@@ -30,7 +30,7 @@ jobs:
       - image: golang:1.13
     steps:
       - attach_workspace: { at: . }
-      - run: go mod test -mod=readonly -v ./...
+      - run: go test -mod=readonly -v ./...
 
   vet:
     docker:
@@ -54,7 +54,7 @@ workflows:
   run:
     jobs:
       - setup
-      - modtidyvendor:
+      - modtidy:
           requires: [setup]
       - test:
           requires: [setup]
