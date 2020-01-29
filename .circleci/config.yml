@@ -1,9 +1,8 @@
 version: 2
 jobs:
   setup:
-    resource_class: small
     docker:
-      - image: segment/circleci-golang:1.12
+      - image: golang:1.13
     steps:
       - checkout
       - persist_to_workspace:
@@ -11,73 +10,50 @@ jobs:
           paths: [.]
 
   modtidyvendor:
-    resource_class: small
     docker:
-      - image: segment/circleci-golang:1.12
+      - image: golang:1.13
     steps:
       - attach_workspace: { at: . }
       - run:
-          name: Check modules are tidy and checked in
+          name: Check modules are tidy
           command: |
-            export GO111MODULE=on
             go mod tidy
-            go mod vendor
             if [ "$(git status --porcelain)" != "" ]; then
-              echo "git tree is dirty after tidying and vendoring modules"
-              echo "ensure go.mod and go.sum are tidy and vendor is checked in"
+              echo "git tree is dirty after tidying"
+              echo "ensure go.mod and go.sum are tidy"
               git status
               exit 1
             fi
 
   test:
-    resource_class: small
     docker:
-      - image: segment/circleci-golang:1.12
+      - image: golang:1.13
     steps:
       - attach_workspace: { at: . }
-      - run: make test
+      - run: go mod test -mod=readonly -v ./...
 
   vet:
-    resource_class: small
     docker:
-      - image: segment/circleci-golang:1.12
+      - image: golang:1.13
     steps:
       - attach_workspace: { at: . }
-      - run: make lint
+      - run: go vet -mod=readonly ./...
 
   build:
     docker:
-      - image: segment/circleci-golang:1.12
+      - image: golang:1.13
     steps:
       - attach_workspace: { at: . }
       - run:
           name: Build
           command: |
             make build
-      - persist_to_workspace:
-          root: .
-          paths: [./dist/]
-
-
-  publish:
-    working_directory: /go/src/github.com/segmentio/robo
-    docker:
-      - image: segment/circleci-golang:1.10
-    steps:
-      - attach_workspace: { at: . }
-      - setup_remote_docker: { reusable: true }
-      - run:
-          name: Release
-          command: |
-            make release
 
 workflows:
   version: 2
   run:
     jobs:
-      - setup:
-          filters:
-            tags: { only: /.*/ }
+      - setup
       - modtidyvendor:
           requires: [setup]
       - test:
@@ -86,10 +62,3 @@ workflows:
           requires: [setup]
       - build:
           requires: [setup]
-          filters:
-            tags: { only: /.*/ }
-      - publish:
-          requires: [build]
-          filters:
-            tags: { only: /.*/ }
-            branches: { ignore: /.*/ }
