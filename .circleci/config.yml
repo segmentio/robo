@@ -1,19 +1,10 @@
 version: 2
 jobs:
-  setup:
-    docker:
-      - image: golang:1.13
-    steps:
-      - checkout
-      - persist_to_workspace:
-          root: .
-          paths: [.]
-
   modtidy:
     docker:
       - image: golang:1.13
     steps:
-      - attach_workspace: { at: . }
+      - checkout
       - run:
           name: Check modules are tidy
           command: |
@@ -29,21 +20,21 @@ jobs:
     docker:
       - image: golang:1.13
     steps:
-      - attach_workspace: { at: . }
+      - checkout
       - run: go test -mod=readonly -v ./...
 
   vet:
     docker:
       - image: golang:1.13
     steps:
-      - attach_workspace: { at: . }
+      - checkout
       - run: go vet -mod=readonly ./...
 
   build:
     docker:
       - image: golang:1.13
     steps:
-      - attach_workspace: { at: . }
+      - checkout
       - run:
           name: Build
           command: |
@@ -53,12 +44,7 @@ workflows:
   version: 2
   run:
     jobs:
-      - setup
-      - modtidy:
-          requires: [setup]
-      - test:
-          requires: [setup]
-      - vet:
-          requires: [setup]
-      - build:
-          requires: [setup]
+      - modtidy
+      - test
+      - vet
+      - build
